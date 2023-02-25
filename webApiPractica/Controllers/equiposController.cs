@@ -16,6 +16,7 @@ namespace webApiPractica.Controllers
             _equiposContexto = equiposContexto;
         }
 
+        //Se obtiene toda la informacion de la Base de Datos
         [HttpGet]
         [Route("GetAll")]
 
@@ -23,21 +24,20 @@ namespace webApiPractica.Controllers
             List<equipos> listadoequipo = (from e in _equiposContexto.equipos
                                             select e).ToList();
 
-            if (listadoequipo.Count == 0)
-            {
+            if (listadoequipo.Count == 0){
                 return NotFound();
-
             }
             return Ok(listadoequipo);
             
         }
 
+        // Se busca en la Base de Datos por ID
         [HttpGet]
         [Route("getbyid/{id}")]
 
         public IActionResult GetById(int id)
         {
-            //El signo ? es porque acepta nulos
+            //El signo ? es porque acepta valores nulos
 
             equipos? equipo = (from e in _equiposContexto.equipos
                           where e.id_auto == id
@@ -46,10 +46,9 @@ namespace webApiPractica.Controllers
             if (equipo == null) { 
             return NotFound();
             } return Ok(equipo);
-
-
         }
 
+        //Se busca en la Base de Datos por nombre 
         [HttpGet]
         [Route("find/")]
 
@@ -65,8 +64,8 @@ namespace webApiPractica.Controllers
             }
             return Ok(equipo);
         }
-        // Se usa Post para crear un registro
 
+        // Se usa Post para crear un registro
         [HttpPost]
         [Route("add")]
         public IActionResult Post([FromBody]equipos equipo)
@@ -83,7 +82,7 @@ namespace webApiPractica.Controllers
                 return BadRequest(ex.Message);  
             }
         }
-
+        // Metodo para ingresar nuevos registros a la Base de Datos
         [HttpPut]
         [Route("update/{id}")]
 
@@ -101,10 +100,9 @@ namespace webApiPractica.Controllers
             _equiposContexto.Entry(equipo).State = EntityState.Modified;
 
             return Ok(equipo);
-
-
         }
 
+        // Metodo para eliminar registros de la Base de Datos
         [HttpDelete]
         [Route("Eliminar/{id}")]
 
@@ -115,8 +113,6 @@ namespace webApiPractica.Controllers
                                select e).FirstOrDefault();
 
             if (equipo == null) return NotFound();
-
-
 
             _equiposContexto.equipos.Attach(equipo);
             _equiposContexto.equipos.Remove(equipo);

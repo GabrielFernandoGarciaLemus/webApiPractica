@@ -21,14 +21,24 @@ namespace webApiPractica.Controllers
         [Route("GetAll")]
 
         public IActionResult Get() {
-            List<equipos> listadoequipo = (from e in _equiposContexto.equipos
-                                            select e).ToList();
-
-            if (listadoequipo.Count == 0){
+            var listaEquipo = (from e in _equiposContexto.equipos
+                                 join m in _equiposContexto.marcas on e.marca_id equals m.id_marcas
+                                 join te in _equiposContexto.tipo_equipo on e.tipo_equipo_id equals te.id_tipo_equipo
+                                 select new
+                                 {
+                                     e.id_equipos,
+                                     e.nombre,
+                                     e.descripcion,
+                                     e.tipo_equipo_id,
+                                     tipo_descripcion = te.descripcion,
+                                     e.marca_id,
+                                     m.nombre_marca
+                                 }).ToList();
+            if (listaEquipo.Count == 0)
+            {
                 return NotFound();
             }
-            return Ok(listadoequipo);
-            
+            return Ok(listaEquipo);
         }
 
         // Se busca en la Base de Datos por ID
@@ -40,7 +50,7 @@ namespace webApiPractica.Controllers
             //El signo ? es porque acepta valores nulos
 
             equipos? equipo = (from e in _equiposContexto.equipos
-                          where e.id_auto == id
+                          where e.id_equipos == id
                           select e).FirstOrDefault();
 
             if (equipo == null) { 
@@ -56,7 +66,7 @@ namespace webApiPractica.Controllers
         {
 
            List <equipos> equipo = (from e in _equiposContexto.equipos
-                                   where e.nombre.Contains(filtro)
+                                   where e.descripcion.Contains(filtro)
                                    select e).ToList();
 
             if (equipo == null){
@@ -82,43 +92,51 @@ namespace webApiPractica.Controllers
                 return BadRequest(ex.Message);  
             }
         }
-        // Metodo para ingresar nuevos registros a la Base de Datos
+        // Metodo para modificar los registros en la Base de Datos
         [HttpPut]
         [Route("update/{id}")]
 
         public IActionResult Actualizar(int id, [FromBody] equipos equipo_Actualizar)
         {
             equipos? equipo = (from e in _equiposContexto.equipos
-                               where e.id_auto == id
+                               where e.id_equipos == id
                                select e).FirstOrDefault();
 
             if (equipo == null) return NotFound();
 
             equipo.nombre = equipo_Actualizar.nombre;
-            equipo.modelo = equipo_Actualizar.modelo;
+            equipo.descripcion = equipo_Actualizar.descripcion;
+            equipo.marca_id = equipo_Actualizar.marca_id;
+            equipo.tipo_equipo_id = equipo_Actualizar.tipo_equipo_id;
+            equipo.anio_compra = equipo_Actualizar.anio_compra;
+            equipo.costo = equipo_Actualizar.costo;
 
             _equiposContexto.Entry(equipo).State = EntityState.Modified;
+            _equiposContexto.SaveChanges();
 
-            return Ok(equipo);
+            return Ok(equipo_Actualizar);
         }
 
-        // Metodo para eliminar registros de la Base de Datos
-        [HttpDelete]
+        // Metodo para cambiar el estado registros de la Base de Datos
+        [HttpPut]
         [Route("Eliminar/{id}")]
 
         public IActionResult Delete( int id)
         {
             equipos? equipo = (from e in _equiposContexto.equipos
-                               where e.id_auto == id
+                               where e.id_equipos == id
                                select e).FirstOrDefault();
 
             if (equipo == null) return NotFound();
 
-            _equiposContexto.equipos.Attach(equipo);
-            _equiposContexto.equipos.Remove(equipo);
+            equipo.estado = "I";
+
+            _equiposContexto.Entry(equipo).State = EntityState.Modified;
             _equiposContexto.SaveChanges();
 
-            return Ok(equipo);  
+            return Ok(equipo);
+
+
 
         }
     }
